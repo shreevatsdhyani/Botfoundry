@@ -207,50 +207,75 @@ interface FileUploadProps {
 export function FileUpload({ onFilesChange }: FileUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: file.size,
-        status: "uploading" as const,
-        progress: 0,
-        file: file, // Store the actual file
-      }))
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const newFiles: UploadedFile[] = acceptedFiles.map((file) => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      size: file.size,
+      status: "success", // mark as 'success' if you're not uploading immediately
+      progress: 100,
+      file: file,
+    }))
 
-      setUploadedFiles((prev) => [...prev, ...newFiles])
+    // Update state first
+    setUploadedFiles((prev) => {
+      const updated = [...prev, ...newFiles]
+      // Call onFilesChange AFTER state is updated
+      // Use a zero-timeout to defer this until after render
+      setTimeout(() => onFilesChange(updated), 0)
+      return updated
+    })
+  }, [onFilesChange])
 
-      // Simulate file upload progress
-      newFiles.forEach((fileData) => {
-        simulateUpload(fileData.id)
+
+  const updateProgress = (fileId: string, progress: number, status: "success" | "error", error?: string) => {
+    setUploadedFiles((prev) =>
+      prev.map((file) =>
+        file.id === fileId ? { ...file, progress, status, error } : file
+      )
+    )
+  }
+
+  const uploadFileToBackend = async (fileId: string, file: File) => {
+    const formData = new FormData()
+    formData.append("files", file)
+
+    try {
+      const response = await fetch("http://localhost:5000/create", {
+        method: "POST",
+        body: formData,
       })
 
-      onFilesChange([...uploadedFiles, ...newFiles])
-    },
-    [uploadedFiles, onFilesChange],
-  )
+      const data = await response.json()
 
-  const simulateUpload = (fileId: string) => {
-    const interval = setInterval(() => {
       setUploadedFiles((prev) =>
-        prev.map((file) => {
-          if (file.id === fileId) {
-            const newProgress = Math.min(file.progress + Math.random() * 30, 100)
-            if (newProgress >= 100) {
-              clearInterval(interval)
-              return {
-                ...file,
-                progress: 100,
-                status: "success", // Always success for now since we're just validating files
-              }
+        prev.map((f) =>
+          f.id === fileId
+            ? {
+              ...f,
+              status: response.ok ? "success" : "error",
+              progress: 100,
+              error: response.ok ? undefined : data?.error || "Upload failed.",
             }
-            return { ...file, progress: newProgress }
-          }
-          return file
-        }),
+            : f
+        )
       )
-    }, 200)
+    } catch (error) {
+      setUploadedFiles((prev) =>
+        prev.map((f) =>
+          f.id === fileId
+            ? {
+              ...f,
+              status: "error",
+              progress: 100,
+              error: "Network error. Please try again.",
+            }
+            : f
+        )
+      )
+    }
   }
+
 
   const removeFile = (fileId: string) => {
     const updatedFiles = uploadedFiles.filter((file) => file.id !== fileId)
@@ -284,10 +309,9 @@ export function FileUpload({ onFilesChange }: FileUploadProps) {
         {...getRootProps()}
         className={`
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200
-          ${
-            isDragActive
-              ? "border-foreground bg-muted/50"
-              : "border-border hover:border-muted-foreground"
+          ${isDragActive
+            ? "border-foreground bg-muted/50"
+            : "border-border hover:border-muted-foreground"
           }
         `}
       >
