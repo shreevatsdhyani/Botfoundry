@@ -84,93 +84,37 @@ BotFoundry is a full-stack platform that lets you create custom AI chatbots trai
 
 ## Architecture
 
-### System Overview
+![BotFoundry Architecture Diagram](./Botfoundry/public/architecture-diagram.png)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CLIENT LAYER                             │
-│   Web App (Next.js)   │   External Apps   │   Mobile (Future)  │
-└──────────────┬──────────────────┬─────────────────┬────────────┘
-               │   JWT Token      │   API Key        │
-               ▼                  ▼                  ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      API GATEWAY (FastAPI)                      │
-│          CORS → Rate Limiter → Auth Guard → Router              │
-└──────────────────────────────┬──────────────────────────────────┘
-                               │
-        ┌──────────────────────┼──────────────────────┐
-        ▼                      ▼                       ▼
-┌───────────────┐   ┌──────────────────┐   ┌──────────────────┐
-│ Auth Service  │   │  Chatbot Service  │   │   RAG Service    │
-│ Login/Register│   │  CRUD/Management │   │ ChatbotManager   │
-└───────┬───────┘   └────────┬─────────┘   └────────┬─────────┘
-        │                    │                        │
-        └────────────────────┴──────────┬─────────────┘
-                                        │
-                               ┌────────▼────────┐
-                               │ SQLAlchemy ORM   │
-                               └────────┬────────┘
-                 ┌──────────────────────┼──────────────────┐
-                 ▼                      ▼                   ▼
-        ┌────────────────┐  ┌──────────────────┐  ┌──────────────┐
-        │ SQLite / Pg    │  │  FAISS Vectors   │  │  File Store  │
-        │ (Users, Bots,  │  │  (Embeddings)    │  │  (Docs)      │
-        │  Convos, Keys) │  │                  │  │              │
-        └────────────────┘  └──────────────────┘  └──────────────┘
-                 │                      │
-        ┌────────▼──────────────────────▼────────┐
-        │            EXTERNAL SERVICES            │
-        │  Groq (LLM)  │  HuggingFace  │  DDG   │
-        └────────────────────────────────────────┘
-```
+### System Architecture
 
-### RAG Pipeline (Document → Answer)
+The system is organized into multiple layers:
 
-```
-INGESTION PHASE
-─────────────────────────────────────────────────────────────────
-Upload File → Validate → Extract Text → Split into Chunks
-                                        (500 chars, 50 overlap)
-                                               │
-                                               ▼
-                                    Generate Embeddings (HuggingFace)
-                                               │
-                                               ▼
-                                    Store in FAISS Index
-                                               │
-                                               ▼
-                                    Save Chatbot to DB + Generate API Key
+- **Client Layer**: Web UI (Next.js), External Apps (via API), and future mobile clients
+- **API Gateway**: FastAPI application with CORS, rate limiting, and authentication middleware
+- **Business Logic**: Service layer handling authentication, chatbot management, and RAG pipeline
+- **Data Layer**: SQLAlchemy ORM managing relational database and vector store (FAISS)
+- **External Services**: Groq LLM, HuggingFace embeddings, DuckDuckGo search
 
-QUERY PHASE
-─────────────────────────────────────────────────────────────────
-User Query → Detect Intent (Agent vs RAG)
-                    │
-          ┌─────────┴──────────┐
-          ▼                    ▼
-   Agent Tools              RAG Pipeline
-   (calc/date/search)       Embed Query → FAISS Search (top-4)
-                            → Load Conversation History (last 5)
-                            → Build Context Prompt
-                            → Groq LLM (LLaMA 3.1 8B)
-                            → Stream Response
-                            → Save to DB + Update Stats
-```
+### RAG Pipeline Flow
 
-### Authentication Flows
+**Document Ingestion Phase:**
+Upload File → Validate → Extract Text → Split into Chunks (500 chars, 50 overlap) → Generate Embeddings (HuggingFace) → Store in FAISS Index → Save Chatbot to DB + Generate API Key
+
+**Query Processing Phase:**
+User Query → Detect Intent (Agent vs RAG) → Route to appropriate handler → Generate Response using LLaMA 3.1 8B via Groq → Return with source attribution
+
+### Authentication & Security
 
 **JWT Authentication (Web UI)**
-```
-Login → Verify Password (bcrypt) → Issue JWT (30 min) + Refresh Token (7 days)
-→ Store in localStorage → Attach as Bearer header on all requests
-→ Auto-refresh before expiry
-```
+- Login → Verify Password (bcrypt) → Issue JWT (30 min access) + Refresh Token (7 days)
+- Store tokens in localStorage → Attach JWT as Bearer header on all requests
+- Auto-refresh before expiry
 
 **API Key Authentication (External)**
-```
-Request with X-API-Key header → SHA-256 hash → DB lookup
-→ Verify chatbot is active → Check rate limit (60/min)
-→ Process query → Increment usage counters
-```
+- Request with X-API-Key header → SHA-256 hash → DB lookup
+- Verify chatbot is active → Check rate limit (60 req/min)
+- Process query → Increment usage counters
 
 ---
 
