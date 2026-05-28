@@ -1,313 +1,529 @@
-# BotFoundry Backend API v2.0
+# 🤖 BotFoundry — AI Chatbot Builder Platform
 
-FastAPI-based backend for BotFoundry AI chatbot platform with authentication, multi-chatbot support, and AI agent capabilities.
+<div align="center">
 
-## 🚀 Features
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-green.svg)
+![Node](https://img.shields.io/badge/node-18+-green.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-- **User Authentication** - JWT-based auth with register/login
-- **Multi-Chatbot Management** - Each user can create multiple chatbots
-- **RAG (Retrieval-Augmented Generation)** - Document-based chatbots using LangChain + FAISS
-- **AI Agent Tools** - Web search, calculator, datetime queries
-- **API Key System** - Unique API keys per chatbot for public access
-- **Conversation History** - Track all conversations and messages
-- **Analytics** - Real-time statistics and metrics
-- **Auto-Generated Docs** - Swagger UI at `/docs`
+**Build, deploy, and manage custom AI chatbots powered by your own documents.**
 
-## 📦 Installation
+</div>
 
-### 1. Install Dependencies
 
-```bash
-cd ai
-pip install -r requirements.txt
-```
+## Overview
 
-### 2. Setup Environment
+BotFoundry is a full-stack platform that lets you create custom AI chatbots trained on your own documents (PDF, DOCX, TXT). It uses a **Retrieval-Augmented Generation (RAG)** pipeline to provide accurate, context-aware answers grounded in your content, with an integrated AI agent layer for tasks like calculations, web search, and date/time queries.
 
-Copy `.env.example` to `.env` and configure:
+### What it does
 
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-```env
-# Required
-GROQ_API_KEY=your-groq-api-key
-SECRET_KEY=your-secret-key-min-32-chars
-
-# Optional (defaults work)
-DATABASE_URL=sqlite:///./botfoundry.db
-ALLOWED_ORIGINS=http://localhost:3000
-```
-
-### 3. Run Server
-
-```bash
-python main.py
-```
-
-Or with uvicorn:
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 5000
-```
-
-Server will start at: `http://localhost:5000`
-
-## 📚 API Documentation
-
-Once running, visit:
-- **Swagger UI**: http://localhost:5000/docs
-- **ReDoc**: http://localhost:5000/redoc
-
-## 🔐 Authentication Flow
-
-### Register
-```bash
-POST /auth/register
-{
-  "email": "user@example.com",
-  "username": "johndoe",
-  "password": "securepass123",
-  "full_name": "John Doe"
-}
-```
-
-### Login
-```bash
-POST /auth/login
-{
-  "email": "user@example.com",
-  "password": "securepass123"
-}
-
-# Returns:
-{
-  "access_token": "eyJ...",
-  "refresh_token": "eyJ...",
-  "token_type": "bearer"
-}
-```
-
-### Use Token
-Add to request headers:
-```
-Authorization: Bearer <access_token>
-```
-
-## 🤖 Creating a Chatbot
-
-```bash
-POST /chatbots/create
-Content-Type: multipart/form-data
-Authorization: Bearer <token>
-
-Form Data:
-- name: "Customer Support Bot"
-- description: "Answers customer questions"
-- files: [file1.pdf, file2.docx, file3.txt]
-```
-
-Response:
-```json
-{
-  "chatbot_id": "bot_abc123",
-  "name": "Customer Support Bot",
-  "status": "active",
-  "api_key": "sk_xyz789...",
-  "api_endpoint": "/api/v1/bot_abc123/chat",
-  "documents_processed": 3,
-  "chunks_created": 150
-}
-```
-
-## 💬 Chat with Your Chatbot
-
-### Authenticated (Your chatbots)
-```bash
-POST /chatbots/{chatbot_id}/chat
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "query": "What are your business hours?",
-  "conversation_id": "conv_123" // optional
-}
-```
-
-### Public API (With API key)
-```bash
-POST /api/v1/{chatbot_id}/chat
-Content-Type: application/x-www-form-urlencoded
-
-api_key=sk_xyz789...&query=What are your business hours?
-```
-
-Or JSON:
-```bash
-POST /api/v1/{chatbot_id}/chat
-Content-Type: application/json
-
-{
-  "query": "What are your business hours?",
-  "api_key": "sk_xyz789..."
-}
-```
-
-## 🛠 AI Agent Capabilities
-
-The chatbot automatically detects and handles:
-
-### 1. Web Search
-```
-Query: "Search for latest AI news"
-Query: "Find information about FastAPI"
-Query: "What's happening with ChatGPT?"
-```
-
-### 2. Calculator
-```
-Query: "Calculate 25 * 48 + 120"
-Query: "What is 15% of 200?"
-Query: "Solve (10 + 5) * 3"
-```
-
-### 3. DateTime
-```
-Query: "What day is it today?"
-Query: "What's the current time?"
-Query: "Tell me today's date"
-```
-
-## 📊 Database Schema
-
-### Users
-- `id`, `email`, `username`, `hashed_password`
-- `full_name`, `is_active`, `is_premium`
-- `created_at`, `updated_at`
-
-### Chatbots
-- `id`, `chatbot_id` (bot_xxx)
-- `name`, `description`, `status`
-- `user_id` (foreign key)
-- `vector_store_path`
-- Stats: `total_conversations`, `total_messages`, `avg_response_time`
-
-### API Keys
-- `id`, `key` (sk_xxx)
-- `chatbot_id`, `is_active`
-- `total_requests`, `last_used`
-
-### Conversations
-- `id`, `conversation_id` (conv_xxx)
-- `chatbot_id`, `user_id`
-- `started_at`, `message_count`
-
-### Messages
-- `id`, `conversation_id`
-- `role` (user/assistant)
-- `content`, `timestamp`
-- `response_time`, `sources`, `agent_actions`
-
-## 🔑 API Endpoints Summary
-
-### Authentication
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - Login user
-- `GET /auth/me` - Get current user info
-
-### Chatbots
-- `POST /chatbots/create` - Create chatbot (with files)
-- `GET /chatbots` - List my chatbots
-- `GET /chatbots/{id}` - Get chatbot details
-- `DELETE /chatbots/{id}` - Delete chatbot
-- `PATCH /chatbots/{id}/status` - Toggle active/inactive
-
-### Chat
-- `POST /chatbots/{id}/chat` - Chat (authenticated)
-- `POST /api/v1/{id}/chat` - Chat (public with API key)
-
-### API Keys
-- `POST /chatbots/{id}/api-keys` - Generate API key
-- `GET /chatbots/{id}/api-keys` - List API keys
-- `DELETE /chatbots/{id}/api-keys/{key_id}` - Revoke key
-
-### Conversations
-- `GET /chatbots/{id}/conversations` - List conversations
-
-### Health
-- `GET /` - API info
-- `GET /health` - Health check
-
-## 🧪 Testing
-
-```bash
-# Install dev dependencies
-pip install pytest httpx
-
-# Run tests
-pytest
-```
-
-## 🚢 Deployment
-
-### Option 1: Railway
-```bash
-railway login
-railway init
-railway up
-```
-
-### Option 2: Render
-1. Connect GitHub repo
-2. Set environment variables
-3. Deploy
-
-### Option 3: Docker
-```bash
-docker build -t botfoundry-api .
-docker run -p 5000:5000 botfoundry-api
-```
-
-## 📝 Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | No | `sqlite:///./botfoundry.db` | Database connection string |
-| `SECRET_KEY` | Yes | - | JWT secret (min 32 chars) |
-| `GROQ_API_KEY` | Yes | - | Groq API key for LLM |
-| `GROQ_MODEL` | No | `llama-3.1-8b-instant` | LLM model name |
-| `ALLOWED_ORIGINS` | No | `http://localhost:3000` | CORS origins (comma-separated) |
-| `MAX_FILE_SIZE_MB` | No | `10` | Max upload file size |
-
-## 🐛 Troubleshooting
-
-### Database locked error
-```bash
-rm botfoundry.db  # Delete and recreate
-python main.py
-```
-
-### CORS errors
-Add your frontend URL to `ALLOWED_ORIGINS` in `.env`
-
-### Import errors
-```bash
-pip install --upgrade -r requirements.txt
-```
-
-## 📄 License
-
-MIT License - See LICENSE file
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Open Pull Request
+- Upload your documents → BotFoundry processes and indexes them
+- Ask questions → Get answers sourced directly from your content
+- Expose a REST API → Integrate your chatbot into any application
+- Manage everything → Via a clean web dashboard
 
 ---
 
-**Built with ❤️ using FastAPI, LangChain, and Groq**
+## Features
+
+### Core Features
+
+| Feature | Description |
+|---|---|
+| **RAG Pipeline** | Document ingestion → chunking → vector embeddings → FAISS similarity search → LLM generation |
+| **Multi-format Upload** | Supports PDF, DOCX, and TXT files (up to 10MB each) |
+| **AI Agent Tools** | Built-in calculator, datetime, and DuckDuckGo web search |
+| **Public REST API** | Each chatbot gets its own authenticated API endpoint |
+| **API Key Management** | Create, name, expire, and revoke keys per chatbot |
+| **Conversation History** | Context-aware responses using last 5 turns of history |
+| **Analytics Dashboard** | Tracks conversations, messages, response times, and API usage |
+| **Swagger Docs** | Auto-generated interactive API documentation |
+
+### Authentication & Security
+
+- JWT-based authentication (access + refresh tokens)
+- Brute-force protection (5 failed attempts → 15-minute lockout)
+- API keys hashed with SHA-256 (never stored in plaintext)
+- Rate limiting via SlowAPI (60 req/min on public endpoints)
+- File upload validation (extension, MIME type, size)
+- CORS protection
+
+---
+
+## Tech Stack
+
+### Backend
+
+| Layer | Technology |
+|---|---|
+| Web Framework | FastAPI 0.115.0 |
+| Language | Python 3.11+ |
+| ORM | SQLAlchemy |
+| Database | SQLite (dev) / PostgreSQL (prod) |
+| LLM | Groq API — LLaMA 3.1 8B |
+| Embeddings | HuggingFace `all-MiniLM-L6-v2` (384-dim) |
+| Vector Store | FAISS |
+| Auth | JWT (python-jose) + bcrypt |
+| Rate Limiting | SlowAPI |
+| Document Parsing | PyPDF2, python-docx |
+
+### Frontend
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15.2.4 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| HTTP Client | Axios |
+| Markdown | React Markdown + syntax highlighting |
+
+---
+
+## Architecture
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CLIENT LAYER                             │
+│   Web App (Next.js)   │   External Apps   │   Mobile (Future)  │
+└──────────────┬──────────────────┬─────────────────┬────────────┘
+               │   JWT Token      │   API Key        │
+               ▼                  ▼                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      API GATEWAY (FastAPI)                      │
+│          CORS → Rate Limiter → Auth Guard → Router              │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+        ┌──────────────────────┼──────────────────────┐
+        ▼                      ▼                       ▼
+┌───────────────┐   ┌──────────────────┐   ┌──────────────────┐
+│ Auth Service  │   │  Chatbot Service  │   │   RAG Service    │
+│ Login/Register│   │  CRUD/Management │   │ ChatbotManager   │
+└───────┬───────┘   └────────┬─────────┘   └────────┬─────────┘
+        │                    │                        │
+        └────────────────────┴──────────┬─────────────┘
+                                        │
+                               ┌────────▼────────┐
+                               │ SQLAlchemy ORM   │
+                               └────────┬────────┘
+                 ┌──────────────────────┼──────────────────┐
+                 ▼                      ▼                   ▼
+        ┌────────────────┐  ┌──────────────────┐  ┌──────────────┐
+        │ SQLite / Pg    │  │  FAISS Vectors   │  │  File Store  │
+        │ (Users, Bots,  │  │  (Embeddings)    │  │  (Docs)      │
+        │  Convos, Keys) │  │                  │  │              │
+        └────────────────┘  └──────────────────┘  └──────────────┘
+                 │                      │
+        ┌────────▼──────────────────────▼────────┐
+        │            EXTERNAL SERVICES            │
+        │  Groq (LLM)  │  HuggingFace  │  DDG   │
+        └────────────────────────────────────────┘
+```
+
+### RAG Pipeline (Document → Answer)
+
+```
+INGESTION PHASE
+─────────────────────────────────────────────────────────────────
+Upload File → Validate → Extract Text → Split into Chunks
+                                        (500 chars, 50 overlap)
+                                               │
+                                               ▼
+                                    Generate Embeddings (HuggingFace)
+                                               │
+                                               ▼
+                                    Store in FAISS Index
+                                               │
+                                               ▼
+                                    Save Chatbot to DB + Generate API Key
+
+QUERY PHASE
+─────────────────────────────────────────────────────────────────
+User Query → Detect Intent (Agent vs RAG)
+                    │
+          ┌─────────┴──────────┐
+          ▼                    ▼
+   Agent Tools              RAG Pipeline
+   (calc/date/search)       Embed Query → FAISS Search (top-4)
+                            → Load Conversation History (last 5)
+                            → Build Context Prompt
+                            → Groq LLM (LLaMA 3.1 8B)
+                            → Stream Response
+                            → Save to DB + Update Stats
+```
+
+### Authentication Flows
+
+**JWT Authentication (Web UI)**
+```
+Login → Verify Password (bcrypt) → Issue JWT (30 min) + Refresh Token (7 days)
+→ Store in localStorage → Attach as Bearer header on all requests
+→ Auto-refresh before expiry
+```
+
+**API Key Authentication (External)**
+```
+Request with X-API-Key header → SHA-256 hash → DB lookup
+→ Verify chatbot is active → Check rate limit (60/min)
+→ Process query → Increment usage counters
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+
+- Groq API key ([get one free](https://console.groq.com))
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/botfoundry.git
+cd botfoundry
+```
+
+### 2. Backend setup
+
+```bash
+cd backend
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Create a `.env` file in the `backend/` directory:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+SECRET_KEY=your_jwt_secret_key_here
+DATABASE_URL=sqlite:///./botfoundry.db
+UPLOAD_DIR=uploads
+MAX_FILE_SIZE_MB=10
+```
+
+Start the backend:
+
+```bash
+python main.py
+# Runs on http://localhost:5000
+# Swagger docs: http://localhost:5000/docs
+```
+
+### 3. Frontend setup
+
+```bash
+cd frontend
+npm install
+npm run dev
+# Runs on http://localhost:3000
+```
+
+### 4. First run
+
+1. Open `http://localhost:3000`
+2. Register an account
+3. Click **Create Chatbot**
+4. Upload a PDF or text file
+5. Wait ~30–60 seconds for processing
+6. Start chatting — or copy your API key for external use
+
+---
+
+## Project Structure
+
+```
+botfoundry/
+├── backend/
+│   ├── main.py                  # FastAPI app entry point
+│   ├── requirements.txt
+│   ├── .env
+│   ├── botfoundry.db            # SQLite database (dev)
+│   ├── uploads/                 # Uploaded documents
+│   ├── vector_stores/           # FAISS indexes per chatbot
+│   │
+│   ├── routers/
+│   │   ├── auth.py              # /auth/* endpoints
+│   │   ├── chatbots.py          # /chatbots/* endpoints
+│   │   └── public_api.py        # /api/v1/* endpoints
+│   │
+│   ├── services/
+│   │   ├── rag_service.py       # ChatbotManager, RAG pipeline
+│   │   ├── agent_service.py     # Calculator, search, datetime tools
+│   │   └── auth_service.py      # Token generation, validation
+│   │
+│   ├── models/
+│   │   ├── database.py          # SQLAlchemy models
+│   │   └── schemas.py           # Pydantic request/response schemas
+│   │
+│   └── middleware/
+│       ├── rate_limiter.py
+│       └── auth_guard.py
+│
+├── frontend/
+│   ├── app/                     # Next.js App Router pages
+│   │   ├── page.tsx             # Landing page
+│   │   ├── login/
+│   │   ├── dashboard/
+│   │   └── chatbots/[id]/
+│   │
+│   ├── components/              # Reusable React components
+│   ├── lib/
+│   │   ├── api.ts               # Axios API client
+│   │   └── auth.ts              # Auth helpers
+│   └── types/                   # TypeScript type definitions
+│
+├── README.md
+├── ARCHITECTURE.md
+└── ARCHITECTURE_DIAGRAMS.md
+```
+
+---
+
+## API Reference
+
+### Authentication Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/auth/register` | Register new user | No |
+| `POST` | `/auth/login` | Login, returns JWT tokens | No |
+| `POST` | `/auth/logout` | Invalidate token | Yes (JWT) |
+| `GET` | `/auth/me` | Get current user info | Yes (JWT) |
+
+### Chatbot Management
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `GET` | `/chatbots` | List all user's chatbots | Yes (JWT) |
+| `POST` | `/chatbots/create` | Create chatbot (multipart) | Yes (JWT) |
+| `GET` | `/chatbots/{id}` | Get chatbot details + stats | Yes (JWT) |
+| `PUT` | `/chatbots/{id}` | Update name/description | Yes (JWT) |
+| `DELETE` | `/chatbots/{id}` | Delete chatbot | Yes (JWT) |
+| `PATCH` | `/chatbots/{id}/status` | Toggle active/inactive | Yes (JWT) |
+| `POST` | `/chatbots/{id}/chat` | Chat (web UI) | Yes (JWT) |
+
+### API Key Management
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `GET` | `/chatbots/{id}/keys` | List API keys | Yes (JWT) |
+| `POST` | `/chatbots/{id}/keys` | Create new API key | Yes (JWT) |
+| `DELETE` | `/chatbots/{id}/keys/{key_id}` | Delete API key | Yes (JWT) |
+
+### Public API (External Integrations)
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/api/v1/{bot_id}/chat` | Chat with a chatbot | Yes (API Key) |
+
+#### Public API Usage Example
+
+```bash
+curl -X POST http://localhost:5000/api/v1/bot_5d60d070.../chat \
+  -H "X-API-Key: sk_your_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is this document about?"}'
+```
+
+Response:
+
+```json
+{
+  "answer": "This document covers...",
+  "sources": ["handbook.pdf (chunk 3)", "faq.txt (chunk 1)"],
+  "response_time_ms": 1240,
+  "conversation_id": "conv_abc123"
+}
+```
+
+#### Error Responses
+
+| Status | Meaning |
+|---|---|
+| `401` | Invalid or missing API key |
+| `404` | Chatbot not found |
+| `400` | Chatbot is inactive |
+| `422` | Missing required fields |
+| `429` | Rate limit exceeded (60 req/min) |
+
+---
+
+## Testing Guide
+
+### Full Test Scenario (~30 minutes)
+
+**1. Authentication**
+- Register a new user at `http://localhost:3000`
+- Logout and log back in
+- Try wrong password 5 times → expect 15-minute lockout
+
+**2. Create a Chatbot**
+- Click **Create Chatbot**
+- Upload 2–3 files (PDF, TXT, DOCX)
+- Wait for processing (20–60 seconds)
+- Save the displayed API key (shown only once)
+
+**3. Test Chat**
+- Ask document-specific questions
+- Test agent tools:
+  - `"Calculate 456 * 789"` → calculator
+  - `"What's today's date?"` → datetime
+  - `"Search for latest AI news"` → web search
+- Verify source attribution in responses
+- Ask follow-up questions to test conversation memory
+
+**4. API Key Management**
+- Create 2 additional keys with custom names
+- Set expiration on one key (30 days)
+- Delete a key and verify it stops working
+
+**5. Public API (Postman / cURL)**
+
+```
+Method:  POST
+URL:     http://localhost:5000/api/v1/{YOUR_BOT_ID}/chat
+Headers: X-API-Key: sk_...
+         Content-Type: application/json
+Body:    {"query": "Your question here"}
+```
+
+Test cases:
+- Valid request → answer returned
+- Wrong API key → `401`
+- Invalid bot ID → `404`
+- Missing header → `422`
+- 65+ requests in 1 min → `429`
+
+**6. Database Persistence**
+- Create a chatbot, then stop both servers
+- Restart and verify chatbot, keys, and conversations all persist
+
+**7. Swagger UI**
+- Open `http://localhost:5000/docs`
+- Click **Authorize** and enter your JWT token
+- Test endpoints directly from the browser
+
+### File Upload Security Testing
+
+```
+✅ Valid PDF    → Accepted
+❌ .exe file   → Rejected
+❌ .php file   → Rejected
+❌ File > 10MB → Rejected
+```
+
+---
+
+## Security
+
+BotFoundry uses a defense-in-depth approach:
+
+| Layer | Implementation |
+|---|---|
+| Password storage | bcrypt hashing |
+| JWT tokens | RS256, 30-minute expiry |
+| Refresh tokens | 7-day expiry, rotation on use |
+| API keys | SHA-256 hashed, never stored plaintext |
+| Rate limiting | SlowAPI — 60 req/min public, 100 req/min auth |
+| Brute force | 5 failed logins → 15-minute IP lockout |
+| File uploads | Extension allowlist + MIME validation + 10MB cap |
+| CORS | Explicit origin allowlist |
+| SQL injection | Parameterized queries via SQLAlchemy ORM |
+
+---
+
+## Performance
+
+| Operation | Expected Time |
+|---|---|
+| Chatbot creation (3 files) | 20–60 seconds |
+| Chat response | 1–3 seconds |
+| Public API response | 0.5–2 seconds |
+| Page load | < 1 second |
+| File upload (5MB) | 2–10 seconds |
+
+### Known Limitations
+
+- SQLite supports ~100 concurrent connections (use PostgreSQL for production)
+- FAISS is in-memory; large document sets require more RAM
+- No horizontal scaling without shared storage for vector indexes
+
+---
+
+## Deployment
+
+### Environment Variables (Production)
+
+```env
+GROQ_API_KEY=your_production_groq_key
+SECRET_KEY=a_long_random_secret_string
+DATABASE_URL=postgresql://user:pass@host:5432/botfoundry
+UPLOAD_DIR=/var/botfoundry/uploads
+CORS_ORIGINS=https://yourdomain.com
+```
+
+### Docker (Recommended)
+
+```bash
+docker-compose up --build
+```
+
+### Manual
+
+```bash
+# Backend
+uvicorn main:app --host 0.0.0.0 --port 5000 --workers 4
+
+# Frontend
+npm run build
+npm start
+```
+
+### Production Checklist
+
+- [ ] Switch `DATABASE_URL` to PostgreSQL
+- [ ] Set a strong `SECRET_KEY` (min 32 chars)
+- [ ] Configure HTTPS / SSL termination
+- [ ] Set `CORS_ORIGINS` to your actual domain
+- [ ] Configure file storage (S3 recommended)
+- [ ] Set up log aggregation
+- [ ] Enable database backups
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m "feat: add your feature"`
+4. Push and open a Pull Request
+
+### Commit Convention
+
+```
+feat:     New feature
+fix:      Bug fix
+docs:     Documentation update
+refactor: Code refactor
+test:     Tests
+chore:    Build/config changes
+```
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
