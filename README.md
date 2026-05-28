@@ -84,7 +84,7 @@ BotFoundry is a full-stack platform that lets you create custom AI chatbots trai
 
 ## Architecture
 
-![BotFoundry Architecture Diagram](./Botfoundry/public/architecture-diagram.png)
+![BotFoundry Architecture Diagram](./architecture-diagram.png)
 
 ### System Architecture
 
