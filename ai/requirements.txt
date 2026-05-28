@@ -1,0 +1,40 @@
+# FastAPI Framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+python-multipart==0.0.9
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# Database
+sqlalchemy==2.0.35
+alembic==1.13.3
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.1
+
+# LangChain & AI
+langchain==0.3.7
+langchain-groq==0.2.1
+langchain-community==0.3.5
+langchain-text-splitters==0.3.2
+
+# Document Processing
+unstructured==0.16.9
+pypdf==5.1.0
+python-docx==1.1.2
+
+# Vector Store & Embeddings
+faiss-cpu==1.9.0
+sentence-transformers==3.3.1
+tiktoken==0.8.0
+
+# Agent Tools
+duckduckgo-search==6.3.5
+requests==2.32.3
+
+# Rate Limiting & Security
+slowapi==0.1.9
+python-magic==0.4.27
+bleach==6.2.0

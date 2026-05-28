@@ -1,0 +1,80 @@
+# Frontend (Next.js) - Botfoundry/
+Botfoundry/node_modules/
+Botfoundry/.next/
+Botfoundry/out/
+Botfoundry/.env.local
+Botfoundry/.env.*.local
+Botfoundry/npm-debug.log*
+Botfoundry/yarn-debug.log*
+Botfoundry/yarn-error.log*
+Botfoundry/.pnpm-debug.log*
+Botfoundry/dist/
+Botfoundry/build/
+
+# Backend (Python) - ai/
+ai/__pycache__/
+ai/*.py[cod]
+ai/*$py.class
+ai/*.so
+ai/.Python
+ai/build/
+ai/develop-eggs/
+ai/dist/
+ai/downloads/
+ai/eggs/
+ai/.eggs/
+ai/lib/
+ai/lib64/
+ai/parts/
+ai/sdist/
+ai/var/
+ai/wheels/
+ai/pip-wheel-metadata/
+ai/share/python-wheels/
+ai/*.egg-info/
+ai/.installed.cfg
+ai/*.egg
+ai/MANIFEST
+ai/.env
+ai/.env.local
+ai/.venv
+ai/venv/
+ai/ENV/
+ai/env/
+ai/botfoundry.log
+ai/botfoundry.db
+ai/sqlite.db
+ai/uploads/
+ai/rag_bot_store/
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Root Documentation Files (outside ai/ and Botfoundry/)
+/*.md
+
+# Misc
+.cache/
+.coverage
+.pytest_cache/
+htmlcov/

@@ -1,0 +1,6 @@
+botfoundry.log
+*.pyc
+__pycache__/
+*.db
+uploads/
+rag_bot_store/
